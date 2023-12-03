@@ -10,9 +10,6 @@
 #include "W25Q128JV.h"
 
 void* find_page(uint32_t page) {
-  if (page < MIN_PAGES) { //MAX_PAGES comparison not needed b/c uint16_t cannot hold more
-    return NULL;
-  }
   uint8_t block = page / PAGES_PER_BLOCK;
   page = page % PAGES_PER_BLOCK;
   uint8_t sector = page / PAGES_PER_SECTOR;
@@ -28,50 +25,49 @@ void* find_page(uint32_t page) {
 }
 
 bool sector_write(uint16_t sector, uint8_t* buffer) {
-  if (qspi_get_status() == QSPI_BUSY) {
-    return false;
+  if (get_qspi_status() == QSPI_BUSY) {
+    return 0;
   }
   if (sector > MAX_SECTOR) {
-    return false;
+    return 0;
   }
   sector *= SECTOR_SIZE; //convert to pages
 
   for (int i = 0; i < 16; i++, sector++) {
     write_enable();
-    page_write(sector, &buffer);
+    page_write(sector, buffer);
     buffer += 256;
   }
+  return 1;
 }
 
 bool sector_read(uint16_t sector, uint8_t* buffer) {
-  if (qspi_get_status() == QSPI_BUSY) {
-    return false;
+  if (get_qspi_status() == QSPI_BUSY) {
+    return 0;
   }
   if (sector > MAX_SECTOR) {
-    return false;
+    return 0;
   }
   sector *= SECTOR_SIZE;
 
   for (int i = 0; i < 16; i++, sector++) {
     write_enable();
-    page_write(sector, &buffer);
+    page_write(sector, buffer);
     buffer += 256;
   }
+  return 1;
 }
 
 bool sector_erase(uint16_t sector) {
-  if (qspi_get_status() == QSPI_BUSY) {
-    return false;
+  if (get_qspi_status() == QSPI_BUSY) {
+    return 0;
   }
 
   if (sector > MAX_SECTOR) {
-    return false;
+    return 0;
   }
   sector *= PAGES_PER_SECTOR; //convert to page
-  uint32_t address = (uint32_t)find_page(page);
-  if (address == NULL) {
-    return false;
-  }
+  uint32_t address = (uint32_t)find_page(sector);
 
   write_enable();
 
@@ -93,19 +89,16 @@ bool sector_erase(uint16_t sector) {
       QSPI_TIMEOUT_PERIOD
   );
 
-  while (qspi_get_status() == QSPI_BUSY);
+  while (get_qspi_status() == QSPI_BUSY);
 
-  return true;
+  return 1;
 }
 bool page_write(uint16_t page, uint8_t* buffer) {
-  if (qspi_get_status() == QSPI_BUSY) {
-    return false;
+  if (get_qspi_status() == QSPI_BUSY) {
+    return 0;
   }
 
   uint32_t address = (uint32_t)find_page(page);
-  if (address == NULL) {
-    return false;
-  }
   address = address & PAGE_MASK;
 
   write_enable();
@@ -123,25 +116,22 @@ bool page_write(uint16_t page, uint8_t* buffer) {
       QSPI_PAGE,
       address,
       256,
-      &buffer,
+      buffer,
       1,
       QSPI_TIMEOUT_PERIOD
   );
 
-  while (qspi_get_status() == QSPI_BUSY);
+  while (get_qspi_status() == QSPI_BUSY);
 
-  return true;
+  return 1;
 }
 
 bool page_read(uint16_t page, uint8_t* buffer) {
   if (get_qspi_status() == QSPI_BUSY) {
-    return 1;
+    return 0;
   }
 
   uint32_t address = (uint32_t)find_page(page);
-  if (address == NULL) {
-    return false;
-  }
   address = address & PAGE_MASK;
 
   qspi_set_command(
@@ -155,9 +145,9 @@ bool page_read(uint16_t page, uint8_t* buffer) {
   );
   qspi_send_command(
     0x03,
-    page_find(page_num),
+    address,
     8,
-    &buffer,
+    buffer,
     0,
     QSPI_TIMEOUT_PERIOD
   );
@@ -167,10 +157,10 @@ bool page_read(uint16_t page, uint8_t* buffer) {
 
 
 bool write_enable() {
-  if (qspi_get_status() == QSPI_BUSY) {
+  if (get_qspi_status() == QSPI_BUSY) {
         return 1;
   }
-  qspi_set_commmand(
+  qspi_set_command(
       QSPI_INDIRECT_WRITE,
       QSPI_1_WIRE,
       QSPI_UNUSED,
@@ -188,7 +178,7 @@ bool write_enable() {
       QSPI_TIMEOUT_PERIOD
   );
 
-  qspi_set_commmand(
+  qspi_set_command(
       QSPI_AUTOMATIC_POLLING,
       QSPI_1_WIRE,
       QSPI_UNUSED,
@@ -197,19 +187,19 @@ bool write_enable() {
       QSPI_UNUSED,
       false
   );
-  qspi_status_polling(
+  qspi_status_poll(
       0,
       0x05,
       QSPI_WRITE_REGISTER,
       QSPI_WRITE_REGISTER,
       QSPI_TIMEOUT_PERIOD
   );
-  while (qspi_get_status() == QSPI_BUSY);
+  while (get_qspi_status() == QSPI_BUSY);
   return 0;
 }
 
 bool quad_enable() {
-  if (qspi_get_status() == QSPI_BUSY) {
+  if (get_qspi_status() == QSPI_BUSY) {
     return false;
   }
 
@@ -247,7 +237,7 @@ bool quad_enable() {
       QSPI_UNUSED,
       0,
       QSPI_UNUSED,
-      QSPI_TIMEOUT_PERIOD
+      false
   );
   qspi_status_poll(
       0,
@@ -257,14 +247,14 @@ bool quad_enable() {
       QSPI_TIMEOUT_PERIOD
   );
 
-  while (qspi_get_status() == QSPI_BUSY);
+  while (get_qspi_status() == QSPI_BUSY);
 
   return 0;
 }
 
 void read_register_two(uint8_t* ptr_register_two) {
-  if (qspi_get_status() == QSPI_BUSY) {
-    return 1;
+  if (get_qspi_status() == QSPI_BUSY) {
+    return;
   }
 
   qspi_set_command(
