@@ -182,6 +182,7 @@ bool variable_read(uint16_t size, uint16_t page, uint8_t* buffer) {
       0,
       QSPI_TIMEOUT_PERIOD
   );
+  return 1;
 }
 
 bool variable_write(uint16_t size, uint32_t page, uint8_t* buffer) {

@@ -100,6 +100,26 @@ bool page_write(uint16_t page, uint8_t* buffer);
  */
 bool page_read(uint16_t page, uint8_t* buffer);
 
+/**
+ * Reads a variable number of bytes
+ *
+ * @param size     # of bytes to read
+ * @param page     Page to start reading from. Do not use address
+ * @param buffer   Buffer to put data into. Ensure appropriate size (variable)
+ *
+ * @returns Whether read was successfully completed
+ */
+bool variable_read(uint16_t size, uint32_t page, uint8_t* buffer);
+
+/**
+ * Writes a variable number of bytes
+ * WARNING - uses large amount of memory. >256 bytes!
+ *
+ * @param size     # of bytes to write
+ * @param page     Page to start writing from. Do not use address
+ * @param buffer   Buffer to take data from. Ensure appropriate size (variable)
+ */
+bool variable_write(uint16_t size, uint32_t page, uint8_t* buffer);
 
 /**
  * Writes '1' to write_enable bit on register one. i.e. enables write functionality
