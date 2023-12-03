@@ -22,6 +22,7 @@
 #define QSPI_READ_DATA            0x03
 #define QSPI_PAGE                 0x20
 #define PAGE_MASK                 0x11111100
+#define QSPI_READ_DATA            0x03
 
 //Memory organization macros
 #define BLOCK_SIZE                65536

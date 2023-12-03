@@ -5,6 +5,8 @@
  * - Authors: Anthony, Haidang
  *
  * SUBJECT TO CHANGE; WIP
+ * Log: need to test compilation of variable mem fxns
+ * need to write documentation for variable mem fxns
  */
 
 #include "W25Q128JV.h"
@@ -36,6 +38,7 @@ bool sector_write(uint16_t sector, uint8_t* buffer) {
   for (int i = 0; i < 16; i++, sector++) {
     write_enable();
     page_write(sector, buffer);
+    sector++;
     buffer += 256;
   }
   return 1;
@@ -53,6 +56,7 @@ bool sector_read(uint16_t sector, uint8_t* buffer) {
   for (int i = 0; i < 16; i++, sector++) {
     write_enable();
     page_write(sector, buffer);
+    sector++;
     buffer += 256;
   }
   return 1;
@@ -93,6 +97,7 @@ bool sector_erase(uint16_t sector) {
 
   return 1;
 }
+
 bool page_write(uint16_t page, uint8_t* buffer) {
   if (get_qspi_status() == QSPI_BUSY) {
     return 0;
@@ -146,7 +151,7 @@ bool page_read(uint16_t page, uint8_t* buffer) {
   qspi_send_command(
     0x03,
     address,
-    8,
+    256,
     buffer,
     0,
     QSPI_TIMEOUT_PERIOD
@@ -156,9 +161,57 @@ bool page_read(uint16_t page, uint8_t* buffer) {
 }
 
 
+bool variable_read(uint16_t size, uint16_t page, uint8_t* buffer) {
+  if (get_qspi_status() == QSPI_BUSY) {
+    return 1;
+  }
+  qspi_set_command(
+      QSPI_INDIRECT_READ,
+      QSPI_1_WIRE,
+      QSPI_1_WIRE,
+      QSPI_UNUSED,
+      0,
+      QSPI_1_WIRE,
+      false
+  );
+  qspi_send_command(
+      QSPI_READ_DATA,
+      find_page(page),
+      size,
+      buffer,
+      0,
+      QSPI_TIMEOUT_PERIOD
+  );
+}
+
+bool variable_write(uint16_t size, uint32_t page, uint8_t* buffer) {
+  if (get_qspi_status() == QSPI_BUSY) {
+    return 0;
+  }
+  if (size > 256) {
+    full_pages = size / 256;
+    for (; full_pages > 0; full_pages--) {
+      write_enable();
+      page_write(page, buffer);
+      page++;
+      buffer += 256;
+    }
+    size = size % 256;
+    if (size == 0) { return 1; }
+  }
+  uint8_t temp_page[256] = { 1 };
+  for (int i = 0; size > 0; size--, buffer++, i++) {
+    temp_page[i] = *buffer;
+  }
+  write_enable();
+  page_write(page, temp_page);
+
+  return 1;
+}
+
 bool write_enable() {
   if (get_qspi_status() == QSPI_BUSY) {
-        return 1;
+    return 1;
   }
   qspi_set_command(
       QSPI_INDIRECT_WRITE,
