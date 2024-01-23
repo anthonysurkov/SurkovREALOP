@@ -2,7 +2,7 @@
  * W25Q128JV.h (FLASH interface)
  *
  * - December 3, 2023
- *    Author: Anthony
+ *    Author: Anthony Surkov
  *
  * SUBJECT TO CHANGE; WIP
  */
@@ -20,9 +20,10 @@
 #define QSPI_WRITE_ENABLE         0x06
 #define QSPI_WRITE_REGISTER       0b00000010
 #define QSPI_READ_DATA            0x03
-#define QSPI_PAGE                 0x20
+#define QSPI_PAGE                 0x02
 #define PAGE_MASK                 0x11111100
 #define QSPI_READ_DATA            0x03
+#define QSPI_SECTOR_ERASE         0x20
 
 //Memory organization macros
 #define BLOCK_SIZE                65536
@@ -40,11 +41,12 @@
 
 /**
  * Converts a page number (0 ~ 65535) to its memory address in the FLASH.
- * Specifying a page greater than 65535 will override page 65535.
+ * Specifying a page greater than 65535 will override page 65535
+ * Specifying a page less than 0 will override page 0
  *
- * @returns Void pointer to the address, or null if unsuccessful
+ * @returns Void pointer to the address
  */
-void* find_page(uint32_t page);
+void* flash_findPage(uint32_t page);
 
 
 /**
@@ -55,7 +57,7 @@ void* find_page(uint32_t page);
  *
  * @returns Whether write was successfully completed
  */
-bool sector_write(uint16_t sector, uint8_t* buffer);
+bool flash_writePage(uint16_t sector, uint8_t* buffer);
 
 
 /**
@@ -66,7 +68,7 @@ bool sector_write(uint16_t sector, uint8_t* buffer);
  *
  * @returns Whether read was successfully completed
  */
-bool sector_read(uint16_t sector, uint8_t* buffer);
+bool flash_readSector(uint16_t sector, uint8_t* buffer);
 
 
 /**
@@ -76,7 +78,7 @@ bool sector_read(uint16_t sector, uint8_t* buffer);
  *
  * @returns Whether erase was successfully completed
  */
-bool sector_erase(uint16_t sector);
+bool flash_eraseSector(uint16_t sector);
 
 
 /**
@@ -87,7 +89,7 @@ bool sector_erase(uint16_t sector);
  *
  * @returns Whether write was successfully completed
  */
-bool page_write(uint16_t page, uint8_t* buffer);
+bool flash_writePage(uint16_t page, uint8_t* buffer);
 
 
 /**
@@ -98,7 +100,7 @@ bool page_write(uint16_t page, uint8_t* buffer);
  *
  * @returns Whether read was successfully completed
  */
-bool page_read(uint16_t page, uint8_t* buffer);
+bool flash_readPage(uint16_t page, uint8_t* buffer);
 
 /**
  * Reads a variable number of bytes
@@ -109,17 +111,18 @@ bool page_read(uint16_t page, uint8_t* buffer);
  *
  * @returns Whether read was successfully completed
  */
-bool variable_read(uint16_t size, uint32_t page, uint8_t* buffer);
+
+bool flash_readCustom(uint16_t size, uint32_t page, uint8_t* buffer);
 
 /**
  * Writes a variable number of bytes
- * WARNING - uses large amount of memory. >256 bytes!
+ * WARNING - uses large amount of memory to execute. Max 256 bytes of RAM
  *
  * @param size     # of bytes to write
  * @param page     Page to start writing from. Do not use address
  * @param buffer   Buffer to take data from. Ensure appropriate size (variable)
  */
-bool variable_write(uint16_t size, uint32_t page, uint8_t* buffer);
+bool flash_writeCustom(uint16_t size, uint32_t page, uint8_t* buffer);
 
 /**
  * Writes '1' to write_enable bit on register one. i.e. enables write functionality
@@ -127,7 +130,7 @@ bool variable_write(uint16_t size, uint32_t page, uint8_t* buffer);
  *
  * @returns whether write was successfully enabled
  */
-bool write_enable();
+bool flash_writeEnable();
 
 
 /**
@@ -136,7 +139,7 @@ bool write_enable();
  *
  * @returns whether quad was successfully enabled
  */
-bool quad_enable();
+bool flash_quadEnable();
 
 
 /**
@@ -144,7 +147,7 @@ bool quad_enable();
  *
  * @param ptr_register_two   Reads the contents of register two into argued pointer
  */
-void read_register_two(uint8_t* ptr_register_two);
+void flash_readRegisterTwo(uint8_t* ptr_register_two);
 
 
 /**
@@ -152,7 +155,7 @@ void read_register_two(uint8_t* ptr_register_two);
  *
  * @returns 0 when done
  */
-bool wait_for_flash();
+bool flash_wait();
 
 
 /**
@@ -160,7 +163,6 @@ bool wait_for_flash();
  *
  * @returns masked register one (00000010 if busy, 00000000 if not)
  */
-uint8_t get_flash_status();
+uint8_t flash_getStatus();
 
-
-#endif
+#endif /* PERIPHERALS_FLASH_W25Q128JV_H_ */
