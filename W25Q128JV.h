@@ -12,7 +12,6 @@
 
 #include "../../system_config/QSPI/QSPI.h"
 
-
 //Register and mask macros
 #define QSPI_READ_REGISTER_TWO    0x35
 #define QSPI_WRITE_REGISTER_TWO   0x31
@@ -26,17 +25,17 @@
 #define QSPI_SECTOR_ERASE         0x20
 
 //Memory organization macros
-#define BLOCK_SIZE                65536
-#define SECTOR_SIZE               4096
-#define PAGE_SIZE                 256
+#define FLASH_BLOCK_SIZE          65536
+#define FLASH_SECTOR_SIZE         4096
+#define FLASH_PAGE_SIZE           256
 
-#define PAGES_PER_BLOCK           256
-#define PAGES_PER_SECTOR          16
+#define FLASH_PAGES_PER_BLOCK     256
+#define FLASH_PAGES_PER_SECTOR    16
 
-#define MIN_PAGES                 0
-#define MAX_PAGES                 65535
-#define MIN_SECTOR                0
-#define MAX_SECTOR                4095
+#define FLASH_MIN_PAGES           0
+#define FLASH_MAX_PAGES           65535
+#define FLASH_MIN_SECTOR          0
+#define FLASH_MAX_SECTOR          4095
 
 
 /**

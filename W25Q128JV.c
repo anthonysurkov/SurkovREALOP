@@ -1,4 +1,5 @@
 /*
+ *
  * W25Q128JV.c (FLASH interface)
  *
  * - December 3, 2023
@@ -11,15 +12,15 @@
 #include "W25Q128JV.h"
 
 void* flash_findPage(uint32_t page) {
-  uint8_t block = page / PAGES_PER_BLOCK;
-  page = page % PAGES_PER_BLOCK;
-  uint8_t sector = page / PAGES_PER_SECTOR;
-  page = page % PAGES_PER_SECTOR;
+  uint8_t block = page / FLASH_PAGES_PER_BLOCK;
+  page = page % FLASH_FLASH_PER_BLOCK;
+  uint8_t sector = page / FLASH_PAGES_PER_SECTOR;
+  page = page % FLASH_PAGES_PER_SECTOR;
 
   void* memPtr = (uint32_t*) (
-    (block * BLOCK_SIZE) +
-    (sector * SECTOR_SIZE) +
-    (page * PAGE_SIZE)
+    (block * FLASH_BLOCK_SIZE) +
+    (sector * FLASH_SECTOR_SIZE) +
+    (page * FLASH_PAGE_SIZE)
   );
 
   return memPtr;
@@ -29,10 +30,10 @@ bool flash_writeSector(uint16_t sector, uint8_t* buffer) {
   if (qspi_getStatus() == QSPI_BUSY) {
     return 0;
   }
-  if (sector > MAX_SECTOR) {
+  if (sector > FLASH_MAX_SECTOR) {
     return 0;
   }
-  sector *= SECTOR_SIZE; //convert to pages
+  sector *= FLASH_SECTOR_SIZE; //convert to pages
 
   for (int i = 0; i < 16; i++, sector++) {
     flash_writeEnable();
@@ -47,10 +48,10 @@ bool flash_readSector(uint16_t sector, uint8_t* buffer) {
   if (qspi_getStatus() == QSPI_BUSY) {
     return 0;
   }
-  if (sector > MAX_SECTOR) {
+  if (sector > FLASH_MAX_SECTOR) {
     return 0;
   }
-  sector *= SECTOR_SIZE;
+  sector *= FLASH_SECTOR_SIZE;
 
   for (int i = 0; i < 16; i++, sector++) {
     flash_writeEnable();
@@ -66,10 +67,10 @@ bool flash_eraseSector(uint16_t sector) {
     return 0;
   }
 
-  if (sector > MAX_SECTOR) {
+  if (sector > FLASH_MAX_SECTOR) {
     return 0;
   }
-  sector *= PAGES_PER_SECTOR; //convert to page
+  sector *= FLASH_PAGES_PER_SECTOR; //convert to page
   uint32_t address = (uint32_t)flash_findPage(sector);
 
   flash_writeEnable();
@@ -234,7 +235,7 @@ bool flash_writeEnable() {
       QSPI_FMODE_AUTOMATIC_POLLING,
       QSPI_1_WIRE,
       QSPI_UNUSED,
-      QSPI_UNUSED,
+      iSPI_UNUSED,
       0,
       QSPI_UNUSED,
       false
